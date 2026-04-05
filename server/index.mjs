@@ -11,15 +11,36 @@ const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
 const RATE_LIMIT_MAX_REQUESTS = Number(process.env.RATE_LIMIT_MAX_REQUESTS || 30);
 
 const rateLimitBuckets = new Map();
+const allowedOrigins = ALLOWED_ORIGIN === '*'
+  ? ['*']
+  : ALLOWED_ORIGIN.split(',').map((origin) => origin.trim()).filter(Boolean);
 
-function setCorsHeaders(res) {
-  res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
+function resolveAllowedOrigin(req) {
+  const requestOrigin = req.headers.origin;
+  if (ALLOWED_ORIGIN === '*') {
+    return '*';
+  }
+
+  if (typeof requestOrigin !== 'string' || !requestOrigin.trim()) {
+    return '';
+  }
+
+  return allowedOrigins.includes(requestOrigin) ? requestOrigin : '';
+}
+
+function setCorsHeaders(req, res) {
+  const allowedOrigin = resolveAllowedOrigin(req);
+  if (allowedOrigin) {
+    res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+    res.setHeader('Vary', 'Origin');
+  }
+
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type,X-Demo-Access-Code');
 }
 
-function sendJson(res, statusCode, payload) {
-  setCorsHeaders(res);
+function sendJson(req, res, statusCode, payload) {
+  setCorsHeaders(req, res);
   res.writeHead(statusCode, { 'Content-Type': 'application/json; charset=utf-8' });
   res.end(JSON.stringify(payload));
 }
@@ -103,7 +124,7 @@ async function proxyOpenAIChat(body) {
 }
 
 const server = http.createServer(async (req, res) => {
-  setCorsHeaders(res);
+  setCorsHeaders(req, res);
 
   if (req.method === 'OPTIONS') {
     res.writeHead(204);
@@ -114,7 +135,7 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
 
   if (req.method === 'GET' && url.pathname === '/api/health') {
-    sendJson(res, 200, {
+    sendJson(req, res, 200, {
       ok: true,
       accessCodeConfigured: Boolean(DEMO_ACCESS_CODE),
       openaiConfigured: Boolean(OPENAI_API_KEY),
@@ -126,12 +147,12 @@ const server = http.createServer(async (req, res) => {
     try {
       const body = await readJsonBody(req);
       const ok = validateAccessCode(body.code);
-      sendJson(res, ok ? 200 : 401, {
+      sendJson(req, res, ok ? 200 : 401, {
         ok,
         message: ok ? 'Access granted.' : 'Invalid access code.',
       });
     } catch (error) {
-      sendJson(res, 400, {
+      sendJson(req, res, 400, {
         ok: false,
         message: error instanceof Error ? error.message : 'Invalid request.',
       });
@@ -141,7 +162,7 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === 'POST' && url.pathname === '/api/openai/chat-completions') {
     if (!OPENAI_API_KEY) {
-      sendJson(res, 500, {
+      sendJson(req, res, 500, {
         ok: false,
         message: 'OPENAI_API_KEY is not configured on the server.',
       });
@@ -150,7 +171,7 @@ const server = http.createServer(async (req, res) => {
 
     const accessCode = req.headers['x-demo-access-code'];
     if (!validateAccessCode(Array.isArray(accessCode) ? accessCode[0] : accessCode)) {
-      sendJson(res, 401, {
+      sendJson(req, res, 401, {
         ok: false,
         message: 'Access denied. A valid demo access code is required.',
       });
@@ -159,7 +180,7 @@ const server = http.createServer(async (req, res) => {
 
     const clientIp = getClientIp(req);
     if (isRateLimited(clientIp)) {
-      sendJson(res, 429, {
+      sendJson(req, res, 429, {
         ok: false,
         message: 'Rate limit exceeded. Please try again later.',
       });
@@ -169,11 +190,11 @@ const server = http.createServer(async (req, res) => {
     try {
       const body = await readJsonBody(req);
       const payload = await proxyOpenAIChat(body);
-      sendJson(res, 200, payload);
+      sendJson(req, res, 200, payload);
     } catch (error) {
       const status = typeof error === 'object' && error && 'status' in error ? Number(error.status) : 500;
       const payload = typeof error === 'object' && error && 'payload' in error ? error.payload : null;
-      sendJson(res, status, {
+      sendJson(req, res, status, {
         ok: false,
         message: 'OpenAI proxy request failed.',
         detail: payload,
@@ -182,7 +203,7 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  sendJson(res, 404, {
+  sendJson(req, res, 404, {
     ok: false,
     message: 'Not found.',
   });
