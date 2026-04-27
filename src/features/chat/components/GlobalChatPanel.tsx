@@ -81,8 +81,8 @@ export function GlobalChatPanel() {
             AI
           </span>
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.4em] text-[#111827]">AI 指令输入</p>
-            <p className="text-xs text-slate-500">告诉 AI 你要整篇报告如何生成或修改</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.4em] text-[#111827]">AI COMMAND INPUT</p>
+            <p className="text-xs text-slate-500">Tell the AI how to generate or revise the full report.</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -111,7 +111,7 @@ export function GlobalChatPanel() {
       <div ref={scrollContainerRef} className="mt-5 min-h-[220px] flex-[2] overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50 p-4">
         {messages.length === 0 ? (
           <div className="flex h-full min-h-[200px] items-center justify-center text-center text-sm leading-7 text-slate-500">
-            在这里告诉 AI：生成完整报告、调整结构、澄清 requirement，或继续多轮追问。
+            Tell the AI here to generate a full report, adjust the structure, clarify requirements, or continue with follow-up prompts.
           </div>
         ) : (
           <div className="space-y-3">
@@ -167,7 +167,7 @@ export function GlobalChatPanel() {
         <textarea
           value={input}
           onChange={(event) => setInput(event.target.value)}
-          placeholder={accessUnlocked ? '例如：请基于上传的 requirement、results 和 reference，直接生成完整学术报告，并优先整合实验结果。' : 'Public demo mode: enter your access code to unlock full AI generation.'}
+          placeholder={accessUnlocked ? 'Example: Based on the uploaded requirements, results, and references, generate a complete academic report and prioritize integrating the experimental findings.' : 'Public demo mode: enter your access code to unlock full AI generation.'}
           className="min-h-[140px] w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 text-base text-slate-800 placeholder:text-slate-400 focus:border-[#4b5563] focus:outline-none focus:ring-2 focus:ring-[#4b5563]/30"
         />
 
