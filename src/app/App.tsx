@@ -336,22 +336,23 @@ function WelcomePage({
         preserveAspectRatio="none"
         aria-hidden="true"
       >
+        {/* Leaf-balanced reference: lower edge M0 900 C 330 760 610 690 860 700 C 1120 735 1395 620 1440 450 */}
         <path
-          d="M0 900 C 385 795 845 570 1440 450 L1440 900 Z"
+          d="M0 900 C 330 760 610 690 860 700 C 1120 735 1395 620 1440 450 L1440 900 Z"
           fill="#ffffff"
         />
         <path
-          d="M0 900 C 360 715 800 540 1440 450 C 845 570 385 795 0 900 Z"
+          d="M0 900 Q 520 560 1440 450 C 1395 620 1120 735 860 700 C 610 690 330 760 0 900 Z"
           fill="#b9ffc9"
         />
         <path
-          d="M0 900 C 360 715 800 540 1440 450"
+          d="M0 900 Q 520 560 1440 450"
           fill="none"
           stroke="#d6ffe0"
           strokeWidth="5"
         />
         <path
-          d="M0 900 C 385 795 845 570 1440 450"
+          d="M0 900 C 330 760 610 690 860 700 C 1120 735 1395 620 1440 450"
           fill="none"
           stroke="#8ef5aa"
           strokeWidth="5"
