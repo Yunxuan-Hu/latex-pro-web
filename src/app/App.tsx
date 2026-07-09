@@ -337,11 +337,11 @@ function WelcomePage({
         aria-hidden="true"
       >
         <path
-          d="M0 900 C 390 820 850 585 1440 450 L1440 900 Z"
+          d="M0 900 C 385 795 845 570 1440 450 L1440 900 Z"
           fill="#ffffff"
         />
         <path
-          d="M0 900 C 360 715 800 540 1440 450 C 850 585 390 820 0 900 Z"
+          d="M0 900 C 360 715 800 540 1440 450 C 845 570 385 795 0 900 Z"
           fill="#b9ffc9"
         />
         <path
@@ -351,7 +351,7 @@ function WelcomePage({
           strokeWidth="5"
         />
         <path
-          d="M0 900 C 390 820 850 585 1440 450"
+          d="M0 900 C 385 795 845 570 1440 450"
           fill="none"
           stroke="#8ef5aa"
           strokeWidth="5"
