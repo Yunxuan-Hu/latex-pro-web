@@ -130,6 +130,7 @@ function WorkspaceSidebar() {
   return (
     <aside className="flex min-h-full flex-col gap-4">
       <AccountPanel />
+      <CommercialPanel />
 
       <section className="rounded-3xl border border-slate-950 bg-white p-5 shadow-sm">
         <div className="flex items-center justify-between gap-3">
@@ -215,6 +216,43 @@ function WorkspaceSidebar() {
         <UploadBucketCard bucket="reference" title="Style" acceptedLabel="REFERENCE / TEMPLATE" />
       </section>
     </aside>
+  );
+}
+
+function CommercialPanel() {
+  return (
+    <section className="rounded-3xl border border-slate-950 bg-white p-4 shadow-sm">
+      <div className="flex items-center justify-between gap-2">
+        <div className="rounded-full bg-slate-950 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white">
+          KYY Report
+        </div>
+        <div className="rounded-full border border-slate-300 bg-slate-50 px-3 py-1 text-[11px] font-semibold text-slate-500">
+          Trial
+        </div>
+      </div>
+
+      <div className="mt-4 text-sm font-semibold leading-5 text-slate-900">
+        AI technical report workspace
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">Plan</div>
+          <div className="mt-1 text-sm font-semibold text-slate-800">Private beta</div>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">Access</div>
+          <div className="mt-1 text-sm font-semibold text-slate-800">Full AI</div>
+        </div>
+      </div>
+
+      <a
+        href="mailto:hello@kyyreport.com?subject=KYY%20Report%20Pro%20access"
+        className="mt-3 block rounded-2xl border border-green-300 bg-green-100 px-4 py-2 text-center text-xs font-semibold text-green-950 shadow-sm transition hover:bg-green-200"
+      >
+        Request Pro Access
+      </a>
+    </section>
   );
 }
 

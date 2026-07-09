@@ -115,6 +115,27 @@ export async function loadCloudProject(projectId: string): Promise<WorkspaceReco
   return toWorkspaceRecord(data);
 }
 
+export async function renameCloudProject(projectId: string, name: string): Promise<CloudProjectSummary> {
+  const supabase = requireSupabase();
+  const { data, error } = await supabase
+    .from('projects')
+    .update({ name, updated_at: new Date().toISOString() })
+    .eq('id', projectId)
+    .select('id,name,created_at,updated_at')
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return {
+    id: data.id,
+    name: data.name,
+    createdAt: toTimestamp(data.created_at),
+    updatedAt: toTimestamp(data.updated_at),
+  };
+}
+
 export async function deleteCloudProject(projectId: string): Promise<void> {
   const supabase = requireSupabase();
   const { error } = await supabase.from('projects').delete().eq('id', projectId);

@@ -6,6 +6,7 @@ import {
   deleteCloudProject,
   listCloudProjects,
   loadCloudProject,
+  renameCloudProject,
   saveCloudProject,
   type CloudProjectSummary,
 } from '../../../domain/cloud/projectRepository';
@@ -13,6 +14,7 @@ import { useAppStore } from '../../../store/useAppStore';
 import type { RootState, UIState, WorkspaceRecord, WorkspaceSnapshot } from '../../../store/types';
 
 type AccountStatus = 'idle' | 'working' | 'error' | 'saved';
+type AccountOperation = 'idle' | 'refresh' | 'save' | 'open' | 'rename' | 'delete' | 'auth';
 
 function getErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof Error) {
@@ -75,6 +77,15 @@ function getUserLabel(user: User): string {
   return user.user_metadata?.full_name || user.email || 'Signed in';
 }
 
+function formatProjectTime(timestamp: number): string {
+  return new Intl.DateTimeFormat(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(timestamp));
+}
+
 export function AccountPanel() {
   const configured = isSupabaseConfigured();
   const supabase = useMemo(() => getSupabaseClient(), []);
@@ -89,7 +100,11 @@ export function AccountPanel() {
   const [password, setPassword] = useState('');
   const [projects, setProjects] = useState<CloudProjectSummary[]>([]);
   const [status, setStatus] = useState<AccountStatus>('idle');
+  const [operation, setOperation] = useState<AccountOperation>('idle');
   const [message, setMessage] = useState('');
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState('');
+  const [pendingDeleteProjectId, setPendingDeleteProjectId] = useState<string | null>(null);
 
   const refreshProjects = async () => {
     if (!supabase || !user) {
@@ -97,13 +112,16 @@ export function AccountPanel() {
     }
 
     setStatus('working');
+    setOperation('refresh');
     setMessage('');
 
     try {
       setProjects(await listCloudProjects());
       setStatus('idle');
+      setOperation('idle');
     } catch (error) {
       setStatus('error');
+      setOperation('idle');
       setMessage(getErrorMessage(error, 'Could not load cloud projects.'));
     }
   };
@@ -145,6 +163,7 @@ export function AccountPanel() {
     }
 
     setStatus('working');
+    setOperation('auth');
     setMessage('');
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -155,6 +174,7 @@ export function AccountPanel() {
 
     if (error) {
       setStatus('error');
+      setOperation('idle');
       setMessage(error.message);
     }
   };
@@ -167,6 +187,7 @@ export function AccountPanel() {
     }
 
     setStatus('working');
+    setOperation('auth');
     setMessage('');
 
     const result =
@@ -176,56 +197,110 @@ export function AccountPanel() {
 
     if (result.error) {
       setStatus('error');
+      setOperation('idle');
       setMessage(result.error.message);
       return;
     }
 
     setStatus('idle');
+    setOperation('idle');
     setMessage(mode === 'sign-up' ? 'Check your email if confirmation is enabled.' : '');
   };
 
   const handleSave = async () => {
     setStatus('working');
+    setOperation('save');
     setMessage('');
 
     try {
       await saveCloudProject(getCurrentWorkspaceRecord(useAppStore.getState()));
       setProjects(await listCloudProjects());
       setStatus('saved');
-      setMessage('Saved to your account.');
+      setOperation('idle');
+      setMessage('Saved.');
     } catch (error) {
       setStatus('error');
+      setOperation('idle');
       setMessage(getErrorMessage(error, 'Could not save project.'));
     }
   };
 
   const handleOpenProject = async (projectId: string) => {
     setStatus('working');
+    setOperation('open');
     setMessage('');
 
     try {
       actions.importWorkspaceSnapshot(await loadCloudProject(projectId));
+      setMessage('Opened.');
       setStatus('idle');
+      setOperation('idle');
     } catch (error) {
       setStatus('error');
+      setOperation('idle');
       setMessage(getErrorMessage(error, 'Could not open project.'));
     }
   };
 
-  const handleDeleteProject = async (projectId: string) => {
-    if (!window.confirm('Delete this cloud project?')) {
+  const startRenameProject = (project: CloudProjectSummary) => {
+    setEditingProjectId(project.id);
+    setEditingName(project.name);
+    setPendingDeleteProjectId(null);
+  };
+
+  const handleRenameProject = async () => {
+    if (!editingProjectId) {
+      return;
+    }
+
+    const name = editingName.trim();
+    if (!name) {
+      setStatus('error');
+      setMessage('Project name is required.');
       return;
     }
 
     setStatus('working');
+    setOperation('rename');
+    setMessage('');
+
+    try {
+      const renamedProject = await renameCloudProject(editingProjectId, name);
+      setProjects((current) =>
+        current.map((project) => (project.id === renamedProject.id ? renamedProject : project)),
+      );
+      setEditingProjectId(null);
+      setEditingName('');
+      setStatus('saved');
+      setOperation('idle');
+      setMessage('Renamed.');
+    } catch (error) {
+      setStatus('error');
+      setOperation('idle');
+      setMessage(getErrorMessage(error, 'Could not rename project.'));
+    }
+  };
+
+  const handleDeleteProject = async (projectId: string) => {
+    if (pendingDeleteProjectId !== projectId) {
+      setPendingDeleteProjectId(projectId);
+      setEditingProjectId(null);
+      return;
+    }
+
+    setStatus('working');
+    setOperation('delete');
     setMessage('');
 
     try {
       await deleteCloudProject(projectId);
       setProjects(await listCloudProjects());
       setStatus('idle');
+      setOperation('idle');
+      setPendingDeleteProjectId(null);
     } catch (error) {
       setStatus('error');
+      setOperation('idle');
       setMessage(getErrorMessage(error, 'Could not delete project.'));
     }
   };
@@ -314,7 +389,7 @@ export function AccountPanel() {
             disabled={status === 'working'}
             className="w-full rounded-2xl border border-green-300 bg-green-100 px-4 py-2 text-left text-xs font-semibold text-green-950 shadow-sm transition hover:bg-green-200 disabled:opacity-60"
           >
-            Save current: {currentWorkspaceName}
+            {operation === 'save' ? 'Saving...' : message === 'Saved.' ? 'Saved current project' : `Save current: ${currentWorkspaceName}`}
           </button>
 
           <div className="flex items-center justify-between">
@@ -337,23 +412,85 @@ export function AccountPanel() {
             ) : (
               projects.map((project) => (
                 <div key={project.id} className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3">
-                  <button
-                    type="button"
-                    onClick={() => void handleOpenProject(project.id)}
-                    className="w-full text-left"
-                  >
-                    <div className="truncate text-sm font-semibold text-slate-800">{project.name}</div>
-                    <div className="mt-1 text-[11px] text-slate-400">
-                      {new Date(project.updatedAt).toLocaleString()}
+                  {editingProjectId === project.id ? (
+                    <div className="space-y-2">
+                      <input
+                        value={editingName}
+                        onChange={(event) => setEditingName(event.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter') {
+                            void handleRenameProject();
+                          }
+                          if (event.key === 'Escape') {
+                            setEditingProjectId(null);
+                            setEditingName('');
+                          }
+                        }}
+                        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+                        autoFocus
+                      />
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => void handleRenameProject()}
+                          disabled={status === 'working'}
+                          className="rounded-xl border border-slate-900 bg-slate-900 px-3 py-2 text-[11px] font-semibold text-white disabled:opacity-60"
+                        >
+                          Save
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingProjectId(null);
+                            setEditingName('');
+                          }}
+                          className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-[11px] font-semibold text-slate-600"
+                        >
+                          Cancel
+                        </button>
+                      </div>
                     </div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void handleDeleteProject(project.id)}
-                    className="mt-2 text-[11px] font-semibold text-slate-400 hover:text-slate-700"
-                  >
-                    Delete
-                  </button>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => void handleOpenProject(project.id)}
+                        className="w-full text-left"
+                      >
+                        <div className="truncate text-sm font-semibold text-slate-800">{project.name}</div>
+                        <div className="mt-1 text-[11px] text-slate-400">Edited {formatProjectTime(project.updatedAt)}</div>
+                      </button>
+                      <div className="mt-3 grid grid-cols-3 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => void handleOpenProject(project.id)}
+                          disabled={status === 'working'}
+                          className="rounded-xl border border-slate-900 bg-slate-900 px-2 py-2 text-[11px] font-semibold text-white disabled:opacity-60"
+                        >
+                          Open
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => startRenameProject(project)}
+                          className="rounded-xl border border-slate-300 bg-white px-2 py-2 text-[11px] font-semibold text-slate-600 hover:bg-slate-50"
+                        >
+                          Rename
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void handleDeleteProject(project.id)}
+                          disabled={status === 'working'}
+                          className={`rounded-xl border px-2 py-2 text-[11px] font-semibold disabled:opacity-60 ${
+                            pendingDeleteProjectId === project.id
+                              ? 'border-slate-900 bg-white text-slate-900'
+                              : 'border-slate-300 bg-white text-slate-400 hover:text-slate-700'
+                          }`}
+                        >
+                          {pendingDeleteProjectId === project.id ? 'Confirm' : 'Delete'}
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               ))
             )}
