@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { User } from '@supabase/supabase-js';
 import { useShallow } from 'zustand/react/shallow';
 import { AccountPanel } from '../features/account/components/AccountPanel';
 import { GlobalChatPanel } from '../features/chat/components/GlobalChatPanel';
@@ -6,9 +7,11 @@ import { PdfViewer } from '../features/preview/components/PdfViewer';
 import { SectionCard } from '../features/sections/components/SectionCard';
 import { UploadBucketCard } from '../features/workspace/components/UploadBucketCard';
 import { buildLatexDocument } from '../domain/document/latex/buildLatexDocument';
+import { getSupabaseClient } from '../domain/auth/supabaseClient';
 import { useAppStore } from '../store/useAppStore';
 
 type DragHandle = 'left' | 'right' | null;
+type TopModal = 'account' | 'membership' | null;
 
 const HANDLE_WIDTH = 16;
 const MIN_LEFT_PX = 220;
@@ -129,9 +132,6 @@ function WorkspaceSidebar() {
 
   return (
     <aside className="flex min-h-full flex-col gap-4">
-      <AccountPanel />
-      <CommercialPanel />
-
       <section className="rounded-3xl border border-slate-950 bg-white p-5 shadow-sm">
         <div className="flex items-center justify-between gap-3">
           <div className="rounded-full bg-slate-950 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white">Workspace</div>
@@ -219,21 +219,19 @@ function WorkspaceSidebar() {
   );
 }
 
-function CommercialPanel() {
+function MembershipPanel() {
   return (
-    <section className="rounded-3xl border border-slate-950 bg-white p-4 shadow-sm">
+    <section className="rounded-3xl border border-slate-950 bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between gap-2">
         <div className="rounded-full bg-slate-950 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white">
-          KYY Report
+          Membership
         </div>
         <div className="rounded-full border border-slate-300 bg-slate-50 px-3 py-1 text-[11px] font-semibold text-slate-500">
           Trial
         </div>
       </div>
 
-      <div className="mt-4 text-sm font-semibold leading-5 text-slate-900">
-        AI technical report workspace
-      </div>
+      <div className="mt-4 text-sm font-semibold leading-5 text-slate-900">KYY Report Pro</div>
 
       <div className="mt-3 grid grid-cols-2 gap-2">
         <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3">
@@ -253,6 +251,126 @@ function CommercialPanel() {
         Request Pro Access
       </a>
     </section>
+  );
+}
+
+function TopNav({ user, onOpenModal }: { user: User | null; onOpenModal: (modal: TopModal) => void }) {
+  return (
+    <div className="fixed right-5 top-5 z-[140] flex items-center gap-2">
+      {user ? (
+        <button
+          type="button"
+          onClick={() => onOpenModal('account')}
+          className="rounded-full border border-white/20 bg-white px-4 py-2 text-xs font-semibold text-slate-950 shadow-sm transition hover:bg-slate-100"
+        >
+          Account
+        </button>
+      ) : (
+        <>
+          <button
+            type="button"
+            onClick={() => onOpenModal('account')}
+            className="rounded-full border border-white/20 bg-white px-4 py-2 text-xs font-semibold text-slate-950 shadow-sm transition hover:bg-slate-100"
+          >
+            Sign in
+          </button>
+          <button
+            type="button"
+            onClick={() => onOpenModal('account')}
+            className="rounded-full border border-slate-950 bg-slate-950 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-slate-700"
+          >
+            Create account
+          </button>
+        </>
+      )}
+      <button
+        type="button"
+        onClick={() => onOpenModal('membership')}
+        className="rounded-full border border-green-200 bg-green-100 px-4 py-2 text-xs font-semibold text-green-950 shadow-sm transition hover:bg-green-200"
+      >
+        Membership
+      </button>
+    </div>
+  );
+}
+
+function TopModalLayer({ modal, onClose }: { modal: TopModal; onClose: () => void }) {
+  if (!modal) {
+    return null;
+  }
+
+  return (
+    <div className="fixed inset-0 z-[180] flex items-start justify-end bg-slate-950/35 px-5 py-20 backdrop-blur-sm">
+      <div className="w-full max-w-[360px]">
+        <div className="mb-3 flex justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full border border-white/20 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-100"
+          >
+            Close
+          </button>
+        </div>
+        {modal === 'account' ? <AccountPanel /> : <MembershipPanel />}
+      </div>
+    </div>
+  );
+}
+
+function WelcomePage({
+  user,
+  onEnter,
+  onOpenModal,
+}: {
+  user: User | null;
+  onEnter: () => void;
+  onOpenModal: (modal: TopModal) => void;
+}) {
+  return (
+    <main className="relative h-screen overflow-hidden bg-black text-white">
+      <TopNav user={user} onOpenModal={onOpenModal} />
+
+      <svg
+        className="pointer-events-none absolute inset-0 h-full w-full"
+        viewBox="0 0 1440 900"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+      >
+        <path
+          d="M0 900 C 300 770 700 585 1440 450 L1440 900 Z"
+          fill="#ffffff"
+        />
+        <path
+          d="M0 900 C 360 715 800 540 1440 450 C 860 520 420 745 0 900 Z"
+          fill="#b9ffc9"
+        />
+        <path
+          d="M0 900 C 360 715 800 540 1440 450"
+          fill="none"
+          stroke="#d6ffe0"
+          strokeWidth="5"
+        />
+        <path
+          d="M0 900 C 420 745 860 520 1440 450"
+          fill="none"
+          stroke="#8ef5aa"
+          strokeWidth="5"
+        />
+      </svg>
+
+      <section className="relative z-10 flex h-screen flex-col items-center justify-center px-6 text-center">
+        <div className="text-[clamp(56px,9vw,136px)] font-black leading-none text-white">
+          {user ? 'Welcome back' : 'Welcome'}
+        </div>
+        <button
+          type="button"
+          onClick={onEnter}
+          className="mt-8 rounded-full border border-green-200 bg-green-100 px-6 py-3 text-sm font-semibold text-green-950 shadow-sm transition hover:bg-green-200"
+        >
+          Open workspace
+        </button>
+      </section>
+    </main>
   );
 }
 
@@ -586,6 +704,32 @@ export default function App() {
   const [leftPercent, setLeftPercent] = useState(13);
   const [centerPercent, setCenterPercent] = useState(43.5);
   const [activeHandle, setActiveHandle] = useState<DragHandle>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [modal, setModal] = useState<TopModal>(null);
+  const [workspaceOpen, setWorkspaceOpen] = useState(false);
+
+  useEffect(() => {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+      return undefined;
+    }
+
+    let mounted = true;
+    supabase.auth.getUser().then(({ data }) => {
+      if (mounted) {
+        setUser(data.user ?? null);
+      }
+    });
+
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => {
+      mounted = false;
+      data.subscription.unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     if (!activeHandle) {
@@ -647,8 +791,19 @@ export default function App() {
 
   const rightPercent = Math.max(100 - leftPercent - centerPercent, 0);
 
+  if (!workspaceOpen) {
+    return (
+      <>
+        <WelcomePage user={user} onEnter={() => setWorkspaceOpen(true)} onOpenModal={setModal} />
+        <TopModalLayer modal={modal} onClose={() => setModal(null)} />
+      </>
+    );
+  }
+
   return (
     <div className="min-h-screen overflow-x-hidden overflow-y-auto bg-slate-100 text-slate-900">
+      <TopNav user={user} onOpenModal={setModal} />
+      <TopModalLayer modal={modal} onClose={() => setModal(null)} />
       <div ref={containerRef} className="flex min-h-screen w-full items-stretch gap-0 px-3 py-3">
         <div style={{ width: `${leftPercent}%` }} className="relative shrink-0 overflow-visible pr-1">
           <WorkspaceSidebar />
