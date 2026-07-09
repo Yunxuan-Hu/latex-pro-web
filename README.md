@@ -10,6 +10,7 @@ A V2 academic report workbench for structured LaTeX drafting, workspace-based do
 - Editable tables, charts, and figures
 - PDF preview compilation
 - Public demo / locked full-AI mode architecture
+- Optional Supabase login and per-user cloud projects
 - Minimal backend proxy for access-code-gated AI usage
 
 ## Core stack
@@ -55,6 +56,15 @@ Then configure these values in your shell or deployment environment:
 - `ALLOWED_ORIGIN`
 - `RATE_LIMIT_MAX_REQUESTS`
 
+### Optional account / cloud project mode
+
+Create a Supabase project, run `supabase/schema.sql` in the Supabase SQL editor, then set:
+
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+
+When these values are present, the app enables Google/email login and per-user cloud project save/load.
+
 ## Scripts
 
 ```bash
@@ -71,6 +81,7 @@ npm run server
 - Add screenshots / GIFs before sharing publicly
 - Prefer a public demo with gated AI rather than exposing paid API usage directly
 - See `PUBLISHING_CHECKLIST.md` for a step-by-step public release checklist
+- See `COMMERCIALIZATION_CHECKLIST.md` for the `kyyreport.com` access-code beta and first paid-test path
 
 ## Current direction
 

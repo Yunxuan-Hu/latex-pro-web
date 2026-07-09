@@ -33,21 +33,21 @@ function extractImageAnalysisField(parsedText: string | undefined, label: string
 function getFileIcon(name: string): string {
   const lower = name.toLowerCase();
   if (/\.(png|jpe?g|webp|gif|bmp)$/i.test(lower)) {
-    return '🖼️';
+    return 'IMG';
   }
   if (/\.pdf$/i.test(lower)) {
-    return '📄';
+    return 'PDF';
   }
   if (/\.(doc|docx)$/i.test(lower)) {
-    return '📝';
+    return 'DOC';
   }
   if (/\.(xls|xlsx|csv)$/i.test(lower)) {
-    return '📊';
+    return 'XLS';
   }
   if (/\.(json|txt|md|tex)$/i.test(lower)) {
-    return '📃';
+    return 'TXT';
   }
-  return '📁';
+  return 'FILE';
 }
 
 export function FileTray({ bucket, title, open }: FileTrayProps) {
@@ -104,7 +104,7 @@ export function FileTray({ bucket, title, open }: FileTrayProps) {
             className="absolute right-full top-1/2 z-10 flex h-16 w-7 -translate-y-1/2 items-center justify-center rounded-l-2xl border border-slate-200 border-r-0 bg-white text-sm font-semibold text-slate-500 shadow-[0_12px_30px_rgba(15,23,42,0.12)] transition hover:bg-slate-50"
             title="Close tray"
           >
-            ←
+            &lt;
           </button>
 
           <div className="relative flex h-full flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_22px_60px_rgba(15,23,42,0.14)]">
@@ -117,7 +117,7 @@ export function FileTray({ bucket, title, open }: FileTrayProps) {
               className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-[10px] font-semibold text-slate-500 transition hover:bg-slate-50"
               title="Close tray"
             >
-              ×
+              x
             </button>
 
             <div className="min-h-0 flex-1 overflow-x-auto overflow-y-hidden px-4 py-2 pt-2">
@@ -136,7 +136,7 @@ export function FileTray({ bucket, title, open }: FileTrayProps) {
                           className="flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white text-[10px] font-semibold text-slate-500 transition hover:bg-slate-50"
                           title="Remove file"
                         >
-                          ×
+                          x
                         </button>
                       </div>
 
@@ -180,7 +180,7 @@ export function FileTray({ bucket, title, open }: FileTrayProps) {
                 <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">File detail</div>
                 <div className="mt-1 truncate text-base font-semibold text-slate-900">{expandedFile.name}</div>
                 <div className="mt-1 text-xs text-slate-500">
-                  {prettySize(expandedFile.size)} • {expandedFile.mimeType || 'unknown mime'} • {expandedFile.status}
+                  {prettySize(expandedFile.size)} / {expandedFile.mimeType || 'unknown mime'} / {expandedFile.status}
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -229,7 +229,7 @@ export function FileTray({ bucket, title, open }: FileTrayProps) {
                 ) : null}
 
                 {expandedFile.parseError ? (
-                  <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm leading-6 text-rose-700">
+                  <div className="mt-4 rounded-2xl border border-slate-300 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-700">
                     {expandedFile.parseError}
                   </div>
                 ) : null}
@@ -286,3 +286,4 @@ export function FileTray({ bucket, title, open }: FileTrayProps) {
     </>
   );
 }
+

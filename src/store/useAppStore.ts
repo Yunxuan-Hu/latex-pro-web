@@ -1,5 +1,6 @@
 import { create, type StateCreator } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
+import { createSampleWorkspaceSnapshot } from '../domain/demo/sampleWorkspace';
 import type {
   AppActions,
   ChatMessage,
@@ -16,6 +17,7 @@ import type {
   SectionSnapshot,
   SectionStatus,
   UIState,
+  WorkspaceRecord,
 } from './types';
 
 const DEFAULT_DOCUMENT_META: DocumentMeta = {
@@ -989,6 +991,36 @@ const createActions = (
     });
   },
 
+  importWorkspaceSnapshot: (workspace: WorkspaceRecord) => {
+    set((state) => {
+      const currentSnapshot = createWorkspaceSnapshotFromSlices({
+        files: state.files,
+        document: state.document,
+        chat: state.chat,
+        snapshots: state.snapshots,
+        ui: state.ui,
+      });
+      const existingOrder = state.workspaces.order.filter((id) => id !== workspace.id);
+
+      return {
+        ...workspace.snapshot,
+        workspaces: {
+          currentWorkspaceId: workspace.id,
+          order: [...existingOrder, workspace.id],
+          byId: {
+            ...state.workspaces.byId,
+            [state.workspaces.currentWorkspaceId]: {
+              ...state.workspaces.byId[state.workspaces.currentWorkspaceId],
+              updatedAt: Date.now(),
+              snapshot: currentSnapshot,
+            },
+            [workspace.id]: workspace,
+          },
+        },
+      };
+    });
+  },
+
   resetWorkspace: () => {
     set((state) => {
       const emptyWorkspace = createDefaultWorkspaceRecord(state.workspaces.byId[state.workspaces.currentWorkspaceId]?.name || 'Workspace');
@@ -1006,6 +1038,29 @@ const createActions = (
           },
         },
         actions: get().actions,
+      };
+    });
+  },
+
+  loadSampleWorkspace: () => {
+    set((state) => {
+      const sampleSnapshot = createSampleWorkspaceSnapshot();
+      const currentWorkspace = state.workspaces.byId[state.workspaces.currentWorkspaceId];
+
+      return {
+        ...sampleSnapshot,
+        workspaces: {
+          ...state.workspaces,
+          byId: {
+            ...state.workspaces.byId,
+            [state.workspaces.currentWorkspaceId]: {
+              ...currentWorkspace,
+              name: 'Sample Solar Forecast Report',
+              updatedAt: Date.now(),
+              snapshot: sampleSnapshot,
+            },
+          },
+        },
       };
     });
   },

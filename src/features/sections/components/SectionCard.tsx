@@ -22,7 +22,7 @@ function createBlockId(prefix: string): string {
 }
 
 function getChartColors(): string[] {
-  return ['#334155', '#2563eb', '#64748b', '#0f172a', '#0ea5e9', '#9333ea'];
+  return ['#111827', '#374151', '#6b7280', '#9ca3af', '#d1d5db', '#4b5563'];
 }
 
 function isImageFile(file: Pick<WorkspaceFile, 'mimeType'>): boolean {
@@ -406,7 +406,7 @@ function BlockEditorHeader({
       <button
         type="button"
         onClick={onRemove}
-        className="rounded-full border border-rose-200 px-3 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50"
+        className="rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
       >
         Remove block
       </button>
@@ -777,7 +777,7 @@ function ChartBlockEditor({
         </div>
 
         {block.chartType === 'pie' ? (
-          <div className="mb-3 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-700">
+          <div className="mb-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
             Pie chart uses a single series of slice values.
           </div>
         ) : null}
@@ -1177,7 +1177,7 @@ export function SectionCard({ sectionId }: SectionCardProps) {
   };
 
   return (
-    <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <article className="rounded-2xl border border-slate-950 bg-white p-4 shadow-sm">
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div className="w-full space-y-2">
@@ -1187,7 +1187,7 @@ export function SectionCard({ sectionId }: SectionCardProps) {
               onChange={(event) => handleTitleChange(event.target.value)}
               placeholder="Section title"
             />
-            <div className="text-xs text-slate-400">key: {section.key}</div>
+            <div className="text-[11px] text-slate-400">{section.key}</div>
           </div>
           <div className="flex flex-wrap gap-2 sm:justify-end">
             <div className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-600">{section.status}</div>
@@ -1197,7 +1197,7 @@ export function SectionCard({ sectionId }: SectionCardProps) {
               onClick={() => moveSection(-1)}
               className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              ↑
+              Up
             </button>
             <button
               type="button"
@@ -1205,7 +1205,7 @@ export function SectionCard({ sectionId }: SectionCardProps) {
               onClick={() => moveSection(1)}
               className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              ↓
+              Down
             </button>
             <button
               type="button"
@@ -1218,7 +1218,7 @@ export function SectionCard({ sectionId }: SectionCardProps) {
             <button
               type="button"
               onClick={() => void handleRemoveSection()}
-              className="rounded-lg border border-rose-200 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50"
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"
             >
               Remove
             </button>
@@ -1226,7 +1226,7 @@ export function SectionCard({ sectionId }: SectionCardProps) {
         </div>
 
         <textarea
-          className="min-h-[140px] w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-600 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+          className="min-h-[140px] w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-600 focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-200"
           placeholder="Write or paste this section's body..."
           value={section.content}
           onChange={(event) => actions.updateSectionContent(sectionId, event.target.value)}
@@ -1235,8 +1235,7 @@ export function SectionCard({ sectionId }: SectionCardProps) {
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <div>
-              <div className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-400">Structured blocks</div>
-              <div className="mt-1 text-xs text-slate-500">Editable tables, charts, and image figures attached to this section</div>
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-950">Blocks</div>
             </div>
             <div className="flex gap-2">
               <button
@@ -1266,7 +1265,7 @@ export function SectionCard({ sectionId }: SectionCardProps) {
 
           {(section.blocks ?? []).length === 0 ? (
             <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-6 text-center text-sm text-slate-500">
-              No structured blocks yet. Add one manually or ask Section AI to generate a table / chart / image figure.
+              No blocks yet.
             </div>
           ) : (
             <div className="space-y-3">
@@ -1303,8 +1302,7 @@ export function SectionCard({ sectionId }: SectionCardProps) {
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
           <div className="mb-3 flex items-center justify-between gap-2">
             <div>
-              <div className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-400">Linked context files</div>
-              <div className="mt-1 text-xs text-slate-500">Manually control which workspace files are explicitly linked to this section.</div>
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-950">Linked files</div>
             </div>
             <div className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] text-slate-500">
               {section.linkedFileIds.length} linked
@@ -1330,7 +1328,7 @@ export function SectionCard({ sectionId }: SectionCardProps) {
                         : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50'
                     }`}
                   >
-                    {file.bucket} · {file.name}
+                    {file.bucket} / {file.name}
                   </button>
                 );
               })}
@@ -1339,11 +1337,11 @@ export function SectionCard({ sectionId }: SectionCardProps) {
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-          <div className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-slate-400">Section AI</div>
+          <div className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-950">Section AI</div>
 
           <div className="mb-3 max-h-[220px] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-3">
             {sectionMessages.length === 0 ? (
-              <div className="text-sm leading-6 text-slate-500">这一节的 AI 修改记录会显示在这里。</div>
+              <div className="text-sm leading-6 text-slate-500">Ask Section AI for a local edit.</div>
             ) : (
               <div className="space-y-3">
                 {sectionMessages.map((message) => {
@@ -1355,7 +1353,7 @@ export function SectionCard({ sectionId }: SectionCardProps) {
                         isUser
                           ? 'ml-auto max-w-[85%] border-slate-900 bg-slate-900 text-white'
                           : message.status === 'error'
-                            ? 'max-w-[88%] border-rose-200 bg-rose-50 text-rose-700'
+                            ? 'max-w-[88%] border-slate-300 bg-slate-100 text-slate-800'
                             : 'max-w-[88%] border-slate-200 bg-slate-50 text-slate-700'
                       }`}
                     >
@@ -1376,7 +1374,7 @@ export function SectionCard({ sectionId }: SectionCardProps) {
                                   isUser ? 'bg-white/10 text-white/80' : 'border border-slate-200 bg-white text-slate-500'
                                 }`}
                               >
-                                {file.bucket} · {file.name}
+                                {file.bucket} / {file.name}
                               </span>
                             ))}
                         </div>
@@ -1389,8 +1387,8 @@ export function SectionCard({ sectionId }: SectionCardProps) {
           </div>
 
           <textarea
-            className="min-h-[92px] w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-600 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-            placeholder="例如：润色这一节、扩写结果分析、生成一个结构化表格、补一个折线图或饼图。"
+            className="min-h-[92px] w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-600 focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-200"
+            placeholder="Tell Section AI how to revise this section, e.g. make it more formal, shorten it, add a table, or align it with uploaded results."
             value={localPrompt}
             onChange={(event) => setLocalPrompt(event.target.value)}
           />
@@ -1401,13 +1399,13 @@ export function SectionCard({ sectionId }: SectionCardProps) {
               disabled={previewStatus === 'compiling'}
               className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {previewStatus === 'compiling' ? 'Compiling…' : previewNeedsRefresh ? 'Recompile' : 'Compile'}
+              {previewStatus === 'compiling' ? 'Compiling...' : previewNeedsRefresh ? 'Recompile' : 'Compile'}
             </button>
             <button
               type="button"
               onClick={() => void handleSectionAI()}
               disabled={submitting || !localPrompt.trim()}
-              className="rounded-full border border-slate-900 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-full border border-green-300 bg-green-100 px-4 py-2 text-sm font-semibold text-green-950 hover:bg-green-200 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {submitting ? 'Applying...' : 'Apply'}
             </button>
@@ -1417,3 +1415,5 @@ export function SectionCard({ sectionId }: SectionCardProps) {
     </article>
   );
 }
+
+

@@ -87,6 +87,15 @@ export function buildGlobalDocumentPrompt(state: RootState, userPrompt: string):
     '- Required packages in downstream LaTeX build: amsmath, amssymb, graphicx, booktabs, hyperref.',
   ].join('\n');
 
+  const sourceDiscipline = [
+    'Source discipline:',
+    '- Files in the requirement bucket are hard instructions and constraints. Follow them unless the user explicitly overrides them.',
+    '- Files in the results bucket are factual evidence, data, findings, figures, and observations. Use them as the primary factual basis.',
+    '- Files in the reference bucket are style, formatting, organization, tone, and structural examples only.',
+    '- Do not copy facts, claims, experimental results, citations, or conclusions from reference files unless the same information is also supported by requirement/results files or the user explicitly asks for it.',
+    '- When evidence is missing or ambiguous, say so in careful academic prose instead of inventing specifics.',
+  ].join('\n');
+
   const outputContract = [
     'Return strict JSON with this exact top-level shape:',
     '{',
@@ -150,6 +159,8 @@ export function buildGlobalDocumentPrompt(state: RootState, userPrompt: string):
     'Prioritize clarity, formal tone, evidence-grounded writing, and complete section prose.',
     '',
     templateContext,
+    '',
+    sourceDiscipline,
     '',
     outputContract,
     '',

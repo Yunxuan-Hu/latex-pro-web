@@ -22,15 +22,15 @@ function CompileErrorPanel({ compileError }: { compileError: string }) {
   const writtenAssets = extractCsvLine(compileError, 'Assets written');
 
   return (
-    <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-left text-xs leading-6 text-rose-700">
-      <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-rose-500">Compile error</div>
+    <div className="rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-left text-xs leading-6 text-slate-700">
+      <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Compile error</div>
 
       {missingAssets.length > 0 ? (
         <div className="mb-3">
-          <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-rose-500">Missing assets</div>
+          <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Missing assets</div>
           <div className="flex flex-wrap gap-2">
             {missingAssets.map((asset) => (
-              <div key={asset} className="rounded-full border border-rose-200 bg-white px-3 py-1 text-[11px] text-rose-700">
+              <div key={asset} className="rounded-full border border-slate-300 bg-white px-3 py-1 text-[11px] text-slate-700">
                 {asset}
               </div>
             ))}
@@ -40,10 +40,10 @@ function CompileErrorPanel({ compileError }: { compileError: string }) {
 
       {writtenAssets.length > 0 ? (
         <div className="mb-3">
-          <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-rose-500">Assets written</div>
+          <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Assets written</div>
           <div className="flex flex-wrap gap-2">
             {writtenAssets.map((asset) => (
-              <div key={asset} className="rounded-full border border-rose-100 bg-white px-3 py-1 text-[11px] text-rose-700">
+              <div key={asset} className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] text-slate-700">
                 {asset}
               </div>
             ))}
@@ -72,7 +72,7 @@ export function PdfViewer() {
   if (!pdfSrc) {
     return (
       <div className="flex h-full min-h-[420px] flex-col items-center justify-center rounded-[28px] border border-dashed border-slate-300 bg-white px-8 text-center text-sm leading-7 text-slate-500">
-        <div>{status === 'compiling' ? 'Compiling PDF preview…' : 'No preview yet.'}</div>
+        <div>{status === 'compiling' ? 'Compiling PDF preview...' : 'No preview yet.'}</div>
         {status === 'error' && compileError ? <div className="mt-4 max-w-full"><CompileErrorPanel compileError={compileError} /></div> : null}
       </div>
     );
@@ -81,7 +81,7 @@ export function PdfViewer() {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden rounded-[24px] border border-slate-300 bg-white shadow-[0_20px_54px_rgba(15,23,42,0.12)]">
       {status === 'error' && compileError ? (
-        <div className="border-b border-rose-200 bg-rose-50 px-4 py-3">
+        <div className="border-b border-slate-300 bg-slate-50 px-4 py-3">
           <CompileErrorPanel compileError={compileError} />
         </div>
       ) : null}
@@ -89,3 +89,4 @@ export function PdfViewer() {
     </div>
   );
 }
+

@@ -74,19 +74,18 @@ export function GlobalChatPanel() {
   };
 
   return (
-    <div className="relative z-10 flex h-[560px] min-h-[560px] max-h-[560px] flex-col rounded-3xl border-[4px] border-[#111827] bg-white p-6 text-slate-900 shadow-lg pointer-events-auto">
+    <div className="relative z-10 flex h-[560px] min-h-[560px] max-h-[560px] flex-col rounded-3xl border-[4px] border-slate-900 bg-white p-5 text-slate-900 shadow-lg pointer-events-auto">
       <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3 text-[#111827]">
-          <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[#1477ff]/15 text-base font-semibold text-[#1477ff]">
+        <div className="flex items-center gap-3 text-slate-900">
+          <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-950 text-base font-semibold text-white">
             AI
           </span>
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.4em] text-[#111827]">AI COMMAND INPUT</p>
-            <p className="text-xs text-slate-500">Tell the AI how to generate or revise the full report.</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.4em] text-slate-900">AI COMMAND INPUT</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <div className={`rounded-full border px-3 py-1 text-[11px] font-semibold ${accessUnlocked ? 'border-emerald-300 bg-emerald-50 text-emerald-700' : 'border-amber-300 bg-amber-50 text-amber-700'}`}>
+          <div className="rounded-full border border-slate-300 bg-slate-50 px-3 py-1 text-[11px] font-semibold text-slate-600">
             {accessUnlocked ? 'Full demo unlocked' : 'Public demo mode'}
           </div>
           <button
@@ -100,18 +99,22 @@ export function GlobalChatPanel() {
 
               void handleUnlock();
             }}
-            className={`rounded-full border px-3 py-1 text-[11px] font-semibold ${accessUnlocked ? 'border-emerald-300 bg-emerald-50 text-emerald-700' : 'border-slate-300 bg-white text-slate-600'}`}
+            className={`rounded-full border px-3 py-1 text-[11px] font-semibold ${
+              accessUnlocked
+                ? 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50'
+                : 'border-green-300 bg-green-100 text-green-950 hover:bg-green-200'
+            }`}
           >
             {accessUnlocked ? 'Lock' : 'Unlock'}
           </button>
-          <span className="text-xs font-medium text-[#111827]">{previewStatus}</span>
+          <span className="text-xs font-medium text-slate-900">{previewStatus}</span>
         </div>
       </div>
 
-      <div ref={scrollContainerRef} className="mt-5 min-h-[220px] flex-[2] overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <div ref={scrollContainerRef} className="mt-5 min-h-0 flex-1 overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50 p-4">
         {messages.length === 0 ? (
           <div className="flex h-full min-h-[200px] items-center justify-center text-center text-sm leading-7 text-slate-500">
-            Tell the AI here to generate a full report, adjust the structure, clarify requirements, or continue with follow-up prompts.
+            Ask for a report, a rewrite, or a section edit.
           </div>
         ) : (
           <div className="space-y-3">
@@ -122,9 +125,9 @@ export function GlobalChatPanel() {
                   key={message.id}
                   className={`rounded-2xl border px-4 py-3 text-sm leading-7 ${
                     isUser
-                      ? 'ml-auto max-w-[80%] border-[#111827] bg-[#111827] text-white'
+                      ? 'ml-auto max-w-[80%] border-slate-900 bg-slate-900 text-white'
                       : message.status === 'error'
-                        ? 'max-w-[84%] border-rose-200 bg-rose-50 text-rose-700'
+                        ? 'max-w-[84%] border-slate-300 bg-slate-100 text-slate-800'
                         : 'max-w-[84%] border-slate-200 bg-white text-slate-800'
                   }`}
                 >
@@ -145,7 +148,7 @@ export function GlobalChatPanel() {
                               isUser ? 'bg-white/10 text-white/80' : 'border border-slate-200 bg-slate-50 text-slate-500'
                             }`}
                           >
-                            {file.bucket} · {file.name}
+                            {file.bucket} / {file.name}
                           </span>
                         ))}
                     </div>
@@ -158,17 +161,17 @@ export function GlobalChatPanel() {
         )}
       </div>
 
-      <div className="mt-5 flex flex-col gap-4 pointer-events-auto">
+      <div className="mt-4 flex shrink-0 flex-col gap-3 pointer-events-auto">
         {!accessUnlocked ? (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800">
-            Public demo mode is active. Unlock with your resume access code to enable full AI generation and document rewriting.
+          <div className="rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700">
+            Unlock full AI generation.
           </div>
         ) : null}
         <textarea
           value={input}
           onChange={(event) => setInput(event.target.value)}
-          placeholder={accessUnlocked ? 'Example: Based on the uploaded requirements, results, and references, generate a complete academic report and prioritize integrating the experimental findings.' : 'Public demo mode: enter your access code to unlock full AI generation.'}
-          className="min-h-[140px] w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 text-base text-slate-800 placeholder:text-slate-400 focus:border-[#4b5563] focus:outline-none focus:ring-2 focus:ring-[#4b5563]/30"
+          placeholder={accessUnlocked ? 'Example: Generate a complete report from the uploaded requirement, evidence, and style files.' : 'Unlock to use AI generation.'}
+          className="h-[112px] min-h-[112px] w-full resize-none rounded-2xl border border-slate-300 bg-white px-4 py-4 text-base text-slate-800 placeholder:text-slate-400 focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-200"
         />
 
         <div className="flex items-center justify-between gap-3">
@@ -178,14 +181,18 @@ export function GlobalChatPanel() {
             disabled={previewStatus === 'compiling'}
             className="rounded-2xl border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {previewStatus === 'compiling' ? 'Compiling…' : previewNeedsRefresh ? 'Recompile Preview' : 'Compile Preview'}
+            {previewStatus === 'compiling' ? 'Compiling...' : previewNeedsRefresh ? 'Recompile Preview' : 'Compile Preview'}
           </button>
 
           <button
             type="button"
             onClick={() => void handleGenerate()}
             disabled={submitting || !input.trim()}
-            className="rounded-2xl border border-[#111827] px-6 py-2 text-sm font-semibold text-[#111827] hover:bg-[#111827]/5 disabled:cursor-not-allowed disabled:opacity-60"
+            className={`rounded-2xl border px-6 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
+              accessUnlocked
+                ? 'border-green-300 bg-green-100 text-green-950 hover:bg-green-200'
+                : 'border-slate-900 text-slate-900 hover:bg-slate-50'
+            }`}
           >
             {submitting ? 'Applying...' : accessUnlocked ? 'Apply Instruction' : 'Unlock to Use AI'}
           </button>
@@ -194,3 +201,4 @@ export function GlobalChatPanel() {
     </div>
   );
 }
+

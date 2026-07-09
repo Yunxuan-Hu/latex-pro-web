@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
+import { AccountPanel } from '../features/account/components/AccountPanel';
 import { GlobalChatPanel } from '../features/chat/components/GlobalChatPanel';
 import { PdfViewer } from '../features/preview/components/PdfViewer';
 import { SectionCard } from '../features/sections/components/SectionCard';
@@ -14,12 +15,70 @@ const MIN_LEFT_PX = 220;
 const MIN_CENTER_PX = 420;
 const MIN_RIGHT_PX = 360;
 
+function slugifyFilename(value: string, fallback: string): string {
+  const slug = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  return slug || fallback;
+}
+
+function downloadBlob(filename: string, blob: Blob) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
+
+function base64ToBlob(base64: string, mimeType: string): Blob {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+
+  return new Blob([bytes], { type: mimeType });
+}
+
+async function copyTextToClipboard(text: string): Promise<void> {
+  try {
+    await navigator.clipboard?.writeText(text);
+    return;
+  } catch {
+    // Fall back below for browsers that block Clipboard API in local/demo contexts.
+  }
+
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.setAttribute('readonly', 'true');
+  textarea.style.position = 'fixed';
+  textarea.style.left = '-9999px';
+  textarea.style.top = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+  const copied = document.execCommand('copy');
+  textarea.remove();
+
+  if (!copied) {
+    throw new Error('Copy failed.');
+  }
+}
+
 function WorkspaceSidebar() {
-  const { workspaceOrder, workspaceById, currentWorkspaceId, actions } = useAppStore(
+  const { workspaceOrder, workspaceById, currentWorkspaceId, fileCount, sectionCount, actions } = useAppStore(
     useShallow((state) => ({
       workspaceOrder: state.workspaces.order,
       workspaceById: state.workspaces.byId,
       currentWorkspaceId: state.workspaces.currentWorkspaceId,
+      fileCount: Object.keys(state.files.byId).length,
+      sectionCount: state.document.sectionOrder.length,
       actions: state.actions,
     })),
   );
@@ -58,11 +117,23 @@ function WorkspaceSidebar() {
     actions.deleteWorkspace(workspaceId);
   };
 
+  const handleLoadSampleWorkspace = () => {
+    const hasCurrentWork = fileCount > 0 || sectionCount > 0;
+    if (hasCurrentWork && !window.confirm('Load the sample workspace and replace the current workspace contents?')) {
+      return;
+    }
+
+    actions.loadSampleWorkspace();
+    setWorkspaceChooserOpen(false);
+  };
+
   return (
     <aside className="flex min-h-full flex-col gap-4">
-      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+      <AccountPanel />
+
+      <section className="rounded-3xl border border-slate-950 bg-white p-5 shadow-sm">
         <div className="flex items-center justify-between gap-3">
-          <div className="text-[clamp(11px,0.95vw,14px)] font-semibold uppercase tracking-[0.25em] text-slate-700">Workspace</div>
+          <div className="rounded-full bg-slate-950 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white">Workspace</div>
           <button
             type="button"
             onClick={handleCreateWorkspace}
@@ -75,13 +146,21 @@ function WorkspaceSidebar() {
         <button
           type="button"
           onClick={() => setWorkspaceChooserOpen((current) => !current)}
-          className="mt-4 flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left transition hover:bg-slate-100"
+          className="mt-4 flex w-full items-center justify-between rounded-2xl border border-slate-950 bg-white px-4 py-3 text-left transition hover:bg-slate-50"
         >
           <div className="min-w-0">
             <div className="truncate text-[clamp(11px,0.95vw,14px)] font-semibold text-slate-800">{currentWorkspace?.name || 'Current workspace'}</div>
             <div className="mt-1 text-[clamp(9px,0.75vw,11px)] text-slate-400">{workspaces.length} workspace{workspaces.length === 1 ? '' : 's'}</div>
           </div>
-          <div className="text-sm text-slate-500">{workspaceChooserOpen ? '▲' : '▼'}</div>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">{workspaceChooserOpen ? 'Close' : 'Open'}</div>
+        </button>
+
+        <button
+          type="button"
+          onClick={handleLoadSampleWorkspace}
+          className="mt-3 w-full rounded-2xl border border-green-300 bg-green-100 px-4 py-2 text-left text-xs font-semibold text-green-950 shadow-sm transition hover:bg-green-200"
+        >
+          Load Sample
         </button>
 
         {workspaceChooserOpen ? (
@@ -118,7 +197,7 @@ function WorkspaceSidebar() {
                     <button
                       type="button"
                       onClick={() => handleDeleteWorkspace(workspace.id, workspace.name)}
-                      className={`rounded-full border px-3 py-1 text-[11px] font-medium ${active ? 'border-rose-300/30 bg-rose-400/10 text-rose-100' : 'border-rose-200 bg-white text-rose-600'}`}
+                      className={`rounded-full border px-3 py-1 text-[11px] font-medium ${active ? 'border-white/20 bg-white/10 text-white' : 'border-slate-300 bg-white text-slate-600'}`}
                     >
                       Delete
                     </button>
@@ -131,9 +210,9 @@ function WorkspaceSidebar() {
       </section>
 
       <section className="flex flex-col gap-3 pb-2">
-        <UploadBucketCard bucket="requirement" title="Requirement Manual" acceptedLabel="PDF / DOC / DOCX / TXT / CSV / JSON / PNG / JPG" />
-        <UploadBucketCard bucket="results" title="Results / Data" acceptedLabel="PDF / DOC / DOCX / TXT / CSV / JSON / PNG / JPG" />
-        <UploadBucketCard bucket="reference" title="Reference Style" acceptedLabel="PDF / DOC / DOCX / TXT / CSV / JSON / PNG / JPG" />
+        <UploadBucketCard bucket="requirement" title="Requirement" acceptedLabel="PDF / DOC / TXT / IMG" />
+        <UploadBucketCard bucket="results" title="Evidence" acceptedLabel="DATA / FIGURES / NOTES" />
+        <UploadBucketCard bucket="reference" title="Style" acceptedLabel="REFERENCE / TEMPLATE" />
       </section>
     </aside>
   );
@@ -144,7 +223,7 @@ function PaperMetaStrip() {
   const actions = useAppStore((state) => state.actions);
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+    <section className="rounded-2xl border border-slate-950 bg-white px-4 py-3 shadow-sm">
       <div className="grid gap-3">
         <div className="grid grid-cols-[1.3fr_1fr_180px] gap-3">
           <input
@@ -195,6 +274,7 @@ function LatexSourcePanel() {
   const sectionsById = useAppStore((state) => state.document.sectionsById);
   const sectionOrder = useAppStore((state) => state.document.sectionOrder);
   const filesById = useAppStore((state) => state.files.byId);
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
 
   const latexSource = useMemo(
     () =>
@@ -208,11 +288,36 @@ function LatexSourcePanel() {
   );
 
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+    <section className="rounded-3xl border border-slate-950 bg-white p-5 shadow-sm">
       <div className="mb-3 flex items-center justify-between">
         <div>
-          <div className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-400">LaTeX Source</div>
-          <div className="mt-1 text-xs text-slate-500">Live generated code from the current document state</div>
+          <div className="rounded-full bg-slate-950 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white">LaTeX Source</div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              copyTextToClipboard(latexSource)
+                .then(() => {
+                  setCopyStatus('copied');
+                  window.setTimeout(() => setCopyStatus('idle'), 1400);
+                })
+                .catch(() => setCopyStatus('error'));
+            }}
+            className="rounded-full border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
+          >
+            {copyStatus === 'copied' ? 'Copied' : copyStatus === 'error' ? 'Copy failed' : 'Copy'}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const filename = `${slugifyFilename(meta.title, 'kyy-report')}.tex`;
+              downloadBlob(filename, new Blob([latexSource], { type: 'application/x-tex;charset=utf-8' }));
+            }}
+            className="rounded-full border border-slate-900 bg-slate-900 px-3 py-1 text-xs font-semibold text-white transition hover:bg-slate-700"
+          >
+            Download .tex
+          </button>
         </div>
       </div>
 
@@ -272,16 +377,16 @@ function MainStudio() {
 
         <PaperMetaStrip />
 
-        <section className="flex min-h-[280px] flex-1 flex-col rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section className="flex min-h-[280px] flex-1 flex-col rounded-3xl border border-slate-950 bg-white p-5 shadow-sm">
           <div className="mb-3 flex items-center justify-between text-sm text-slate-500">
-            <p className="font-semibold uppercase tracking-[0.25em] text-slate-400">Sections</p>
+            <p className="rounded-full bg-slate-950 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white">Sections</p>
             <span>{sections.length} sections</span>
           </div>
 
           <button
             type="button"
             onClick={() => setShowAddModal(true)}
-            className="mb-4 w-full rounded-2xl border border-dashed border-slate-300 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+            className="mb-4 w-full rounded-2xl border border-dashed border-slate-400 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-950 hover:bg-slate-50"
           >
             + Add Section
           </button>
@@ -367,17 +472,29 @@ function MainStudio() {
 function PdfPreviewPane() {
   const preview = useAppStore((state) => state.ui.preview);
   const lastCompiledAt = useAppStore((state) => state.document.meta.lastCompiledAt);
+  const title = useAppStore((state) => state.document.meta.title);
 
   return (
-    <aside className="flex min-h-full flex-col rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+    <aside className="flex min-h-full flex-col rounded-3xl border border-slate-950 bg-white p-5 shadow-sm">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
-          <div className="text-sm font-semibold uppercase tracking-[0.35em] text-slate-700">Preview</div>
-          <div className="mt-1 text-xs text-slate-500">Compiled PDF</div>
+          <div className="rounded-full bg-slate-950 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white">Preview</div>
         </div>
         <div className="flex items-center gap-2">
+          {preview.pdfBase64 ? (
+            <button
+              type="button"
+              onClick={() => {
+                const filename = `${slugifyFilename(title, 'kyy-report')}.pdf`;
+                downloadBlob(filename, base64ToBlob(preview.pdfBase64 || '', 'application/pdf'));
+              }}
+              className="rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
+            >
+              Download PDF
+            </button>
+          ) : null}
           {preview.needsRefresh ? (
-            <div className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">outdated</div>
+            <div className="rounded-full border border-slate-300 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">outdated</div>
           ) : null}
           <div className="rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600">{preview.status}</div>
         </div>
@@ -387,14 +504,14 @@ function PdfPreviewPane() {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span>
             {preview.needsRefresh
-              ? 'Document changed since last successful compile.'
+              ? 'Needs compile.'
               : lastCompiledAt
-                ? `Last compiled: ${new Date(lastCompiledAt).toLocaleString()}`
-                : 'No successful compile yet.'}
+                ? `Compiled: ${new Date(lastCompiledAt).toLocaleString()}`
+                : 'No preview yet.'}
           </span>
-          {preview.compileError ? <span className="font-medium text-rose-600">Compile error present</span> : null}
+          {preview.compileError ? <span className="font-medium text-slate-700">Compile error present</span> : null}
         </div>
-        {preview.compileError ? <div className="mt-2 line-clamp-3 text-rose-600">{preview.compileError}</div> : null}
+        {preview.compileError ? <div className="mt-2 line-clamp-3 text-slate-700">{preview.compileError}</div> : null}
       </div>
 
       <div className="min-h-0 flex-1 rounded-2xl bg-slate-100 p-4">
@@ -514,3 +631,5 @@ export default function App() {
     </div>
   );
 }
+
+

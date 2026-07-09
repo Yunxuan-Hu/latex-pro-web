@@ -248,7 +248,9 @@ export interface AppActions {
   switchWorkspace: (workspaceId: string) => void;
   renameWorkspace: (workspaceId: string, name: string) => void;
   deleteWorkspace: (workspaceId: string) => void;
+  importWorkspaceSnapshot: (workspace: WorkspaceRecord) => void;
   resetWorkspace: () => void;
+  loadSampleWorkspace: () => void;
 }
 
 export interface RootState {

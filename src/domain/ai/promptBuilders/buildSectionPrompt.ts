@@ -101,10 +101,19 @@ export function buildSectionPrompt(state: RootState, sectionId: string, userProm
   const files = collectSectionFiles(state, sectionId);
   const fileContext = files.map(formatSectionFileBlock).join('\n\n-----\n\n');
   const figureCandidateContext = files.filter(isLikelyImageAnalysis).map(formatFigureCandidateBlock).join('\n\n-----\n\n');
+  const sourceDiscipline = [
+    'Source discipline:',
+    '- requirement files are hard constraints and instructions.',
+    '- results files are factual evidence, findings, data, and figures.',
+    '- reference files are style, organization, tone, and structure examples only.',
+    '- Do not use reference files as factual evidence unless the same fact is supported by requirement/results files or explicitly requested by the user.',
+    '- If the requested revision lacks evidence, keep the wording cautious instead of inventing facts.',
+  ].join('\n');
 
   return [
     'System role: You are revising exactly one section inside an academic report.',
     'Revise only the requested section body and structured blocks. Preserve academic tone, precision, and coherence with the larger document.',
+    sourceDiscipline,
     'Return only valid JSON with this exact shape:',
     '{ "content": string, "blocks"?: [{ "type": "table" | "chart" | "image", ... }] }',
     'Use structured table/chart/image blocks instead of raw LaTeX when tabular, statistical, or figure visuals are needed.',
