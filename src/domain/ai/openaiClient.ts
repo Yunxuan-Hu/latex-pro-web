@@ -1,3 +1,5 @@
+import { PRODUCTION_CONFIG, readRuntimeEnv } from '../config/productionConfig';
+
 export interface BrowserOpenAIConfig {
   proxyUrl: string;
   unlockUrl: string;
@@ -12,13 +14,32 @@ export type OpenAIUserContentPart =
 const DEMO_ACCESS_CODE_STORAGE_KEY = 'latex-pro-web-demo-access-code';
 
 function readEnv(key: string): string | undefined {
-  const value = (import.meta as ImportMeta & { env?: Record<string, string | undefined> }).env?.[key];
-  const trimmed = value?.trim();
-  return trimmed ? trimmed : undefined;
+  return readRuntimeEnv(key);
+}
+
+function readEnvWithProductionFallback(key: string): string | undefined {
+  const value = readEnv(key);
+  if (value) {
+    return value;
+  }
+
+  if (key === 'VITE_OPENAI_MODEL') {
+    return PRODUCTION_CONFIG.openaiModel;
+  }
+
+  if (key === 'VITE_OPENAI_PROXY_URL') {
+    return PRODUCTION_CONFIG.openaiProxyUrl;
+  }
+
+  if (key === 'VITE_UNLOCK_ENDPOINT') {
+    return PRODUCTION_CONFIG.unlockEndpoint;
+  }
+
+  return undefined;
 }
 
 function requireEnv(key: string): string {
-  const value = readEnv(key);
+  const value = readEnvWithProductionFallback(key);
   if (!value) {
     throw new Error(`Missing required environment variable: ${key}`);
   }
@@ -76,7 +97,7 @@ export function getBrowserOpenAIConfig(): BrowserOpenAIConfig | null {
   return {
     proxyUrl: requireEnv('VITE_OPENAI_PROXY_URL'),
     unlockUrl: requireEnv('VITE_UNLOCK_ENDPOINT'),
-    model: readEnv('VITE_OPENAI_MODEL') || 'gpt-5.1',
+    model: readEnvWithProductionFallback('VITE_OPENAI_MODEL') || 'gpt-5.1',
     accessCode,
   };
 }

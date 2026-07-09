@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { PRODUCTION_CONFIG, readRuntimeEnv } from '../config/productionConfig';
 
 interface SupabaseRuntimeConfig {
   url: string;
@@ -8,8 +9,8 @@ interface SupabaseRuntimeConfig {
 let client: SupabaseClient | null = null;
 
 export function getSupabaseConfig(): SupabaseRuntimeConfig | null {
-  const url = import.meta.env.VITE_SUPABASE_URL?.trim();
-  const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
+  const url = readRuntimeEnv('VITE_SUPABASE_URL') || PRODUCTION_CONFIG.supabaseUrl;
+  const anonKey = readRuntimeEnv('VITE_SUPABASE_ANON_KEY') || PRODUCTION_CONFIG.supabaseAnonKey;
 
   if (!url || !anonKey) {
     return null;
